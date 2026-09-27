@@ -76,8 +76,8 @@ chord-score --model-key qwen3.5-2b-student --generated gen.jsonl --reference hum
 |---|---|---|---|
 | `qwen3.5-27b` | `Qwen/Qwen3.5-27B` | hidden layer −3 | 54 GB |
 | `qwen3.5-9b` | `Qwen/Qwen3.5-9B` | hidden layer −3 | 21 GB |
-| `qwen3.5-2b-student` | distilled Qwen3.5-2B (`mikezhu/chord-qwen3.5-2b-student`) | last hidden state + readout `P_S` | 7.1 GB |
-| `qwen3.5-0.8b-student` | distilled Qwen3.5-0.8B (`mikezhu/chord-qwen3.5-0.8b-student`) | last hidden state + readout `P_S` | 4.5 GB |
+| `qwen3.5-2b-student` | [`mikezhu/chord-qwen3.5-2b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-2b-student) | last hidden state + readout `P_S` | 7.1 GB |
+| `qwen3.5-0.8b-student` | [`mikezhu/chord-qwen3.5-0.8b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-0.8b-student) | last hidden state + readout `P_S` | 4.5 GB |
 
 `qwen3.5-27b` is the paper's headline configuration and the default. A student
 checkpoint directory (a Hub id or a local `final/` directory, passed as
@@ -103,7 +103,7 @@ data to a trained student (see `distillation/README.md`):
 bash distillation/run_pipeline.sh     # Slurm chain: training texts -> 27B targets -> per-student init -> training
 ```
 
-Released intermediate outputs let you skip stages:
+Released intermediate outputs ([`mikezhu/chord-distill-data`](https://huggingface.co/datasets/mikezhu/chord-distill-data)) let you skip stages:
 
 ```bash
 python scripts/download.py --training-data --features   # train without rebuilding data or 27B targets
@@ -120,7 +120,7 @@ python scripts/download.py --checkpoint qwen3.5-0.8b           # or just take a 
 | `chord/utils/` | internal helpers (config loading, hashing, I/O, the passage record) |
 | `distillation/` | per-student configs, how every training text is produced, teacher targets, training |
 | `examples/` | a runnable scoring example |
-| `scripts/download.py` | released training data, features and student checkpoints |
+| `scripts/download.py` | released training data and features ([`mikezhu/chord-distill-data`](https://huggingface.co/datasets/mikezhu/chord-distill-data)), evaluation texts ([`mikezhu/chord-experiments-data`](https://huggingface.co/datasets/mikezhu/chord-experiments-data)) and student checkpoints |
 | `tests/` | CPU unit tests (`pytest tests`) |
 
 Generated corpora, features and checkpoints are written under `data/` and

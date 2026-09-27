@@ -6,8 +6,8 @@ backbone:
 
 | Student | Backbone | Readout `P_S` | Config |
 |---|---|---|---|
-| `chord-qwen3.5-2b-student` | Qwen3.5-2B | 2048 → 256 | `configs/student_qwen3.5-2b/` |
-| `chord-qwen3.5-0.8b-student` | Qwen3.5-0.8B | 1024 → 256 | `configs/student_qwen3.5-0.8b/` |
+| [`mikezhu/chord-qwen3.5-2b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-2b-student) | Qwen3.5-2B | 2048 → 256 | `configs/student_qwen3.5-2b/` |
+| [`mikezhu/chord-qwen3.5-0.8b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-0.8b-student) | Qwen3.5-0.8B | 1024 → 256 | `configs/student_qwen3.5-0.8b/` |
 
 Each student is its backbone with LoRA adapters (r 16, all projections) and a
 trained linear readout `P_S` on the last-token state of the coherence prompt,
@@ -55,12 +55,12 @@ features → training); the variables it needs are listed at its top.
 Any stage can be skipped by downloading its released output instead
 (`scripts/download.py`):
 
-| To start from | Download |
-|---|---|
-| teacher targets (§2), without rebuilding the texts | `--training-data` |
-| training (§4), without a 27B-class GPU | `--training-data --features` |
-| a trained student | `--checkpoint qwen3.5-2b` / `--checkpoint qwen3.5-0.8b` |
-| rebuilding the texts (§1) | `--eval-texts` (the evaluation texts §1 must exclude) |
+| To start from | Download | From |
+|---|---|---|
+| teacher targets (§2), without rebuilding the texts | `--training-data` | [`mikezhu/chord-distill-data`](https://huggingface.co/datasets/mikezhu/chord-distill-data) |
+| training (§4), without a 27B-class GPU | `--training-data --features` | [`mikezhu/chord-distill-data`](https://huggingface.co/datasets/mikezhu/chord-distill-data) |
+| a trained student | `--checkpoint qwen3.5-2b` / `--checkpoint qwen3.5-0.8b` | [`mikezhu/chord-qwen3.5-2b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-2b-student) / [`mikezhu/chord-qwen3.5-0.8b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-0.8b-student) |
+| rebuilding the texts (§1) | `--eval-texts` (the evaluation texts §1 must exclude) | [`mikezhu/chord-experiments-data`](https://huggingface.co/datasets/mikezhu/chord-experiments-data) |
 
 ## 1. Training texts (`training_data/`)
 
