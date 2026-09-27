@@ -15,7 +15,7 @@ paraphrasing.
 This repository is the metric: scoring two sets of texts with the 27B encoder
 or a distilled student, and the pipeline that distills the students. The paper's
 experiments live in a separate repository,
-[CHORD_experiments](https://github.com/NYUSH-ML/CHORD_experiments).
+[CHORD-Experiment](https://github.com/NYUSH-ML/CHORD-Experiment).
 
 ## Installation
 

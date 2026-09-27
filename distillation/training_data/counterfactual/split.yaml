@@ -2,7 +2,7 @@
 #
 #   python -m chord.data.split_passages --config distillation/training_data/counterfactual/split.yaml
 #
-# Same tool and rules as the evaluation set's split (CHORD_experiments,
+# Same tool and rules as the evaluation set's split (CHORD-Experiment,
 # counterfactual_eval/configs/select_source_passages.yaml), on training-side text. Parents are edited in
 # stage 4b; the reference slice is the clean pool the set builder needs; the
 # unused pool (everything else) supplies the relation-rewrite parents and the

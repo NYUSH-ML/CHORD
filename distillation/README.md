@@ -279,4 +279,4 @@ A trained `final/` directory is used like any encoder:
 `ChordScorer("qwen3.5-2b-student", model="outputs/distill/student_qwen3.5-2b/final")` (or set
 `CHORD_STUDENT_MODEL`). Its Table 1 row, Table 2 column and comparison against
 the teacher are computed in the experiments repository
-(`experiments/student_eval/` in CHORD_experiments).
+(`experiments/student_eval/` in CHORD-Experiment).

@@ -59,7 +59,7 @@ test = [
 
 [project.urls]
 Repository = "https://github.com/NYUSH-ML/CHORD"
-Experiments = "https://github.com/NYUSH-ML/CHORD_experiments"
+Experiments = "https://github.com/NYUSH-ML/CHORD-Experiment"
 "Student models" = "https://huggingface.co/mikezhu/chord-qwen3.5-2b-student"
 
 [project.scripts]

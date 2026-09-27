@@ -3,7 +3,7 @@
 #
 #   python -m chord.data.counterfactual --config distillation/training_data/counterfactual/build.yaml
 #
-# Same builder and families as the evaluation set (CHORD_experiments,
+# Same builder and families as the evaluation set (CHORD-Experiment,
 # counterfactual_eval/configs/build_evalset.yaml); the
 # inputs are training-side: the stage-2a split, the stage-2b Mistral edits and
 # training-seed DLM samples as the sentences spliced in (generator_pools/, seed 20260704).
