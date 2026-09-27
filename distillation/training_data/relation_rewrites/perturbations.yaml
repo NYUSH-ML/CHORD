@@ -1,0 +1,57 @@
+# Relation-family perturbations for DISTILLATION TRAINING, on fresh
+# training-side parents (picked in stage 4, counterfactual/build_layer.py). Same editor,
+# rubrics, dose levels and placement as the released training perturbations
+# (perturbations_mistral_editor.yaml): Mistral-Small-24B-Instruct-2501,
+# deliberately different from the Qwen3-30B-A3B evaluation editor and the
+# Qwen3.5-27B teacher. Only the two relation families, which are the ones the
+# students under-reproduce (see the README, "The distilled 2B student").
+#
+#   vllm serve mistralai/Mistral-Small-24B-Instruct-2501 --served-model-name mistral-24b-editor --port 8000
+#   python -m chord.data.generate_perturbations --config distillation/training_data/relation_rewrites/perturbations.yaml
+seed: 20260919
+splits: [test]
+resume: true
+
+input:
+  manifest: data/distill/training_data/relation_rewrites/parents_manifest.jsonl
+output:
+  perturbations: data/distill/training_data/relation_rewrites/llm_edits.jsonl
+
+max_candidates: 100000
+llm_position: uniform
+severity_rates: {mild: 0.10, moderate: 0.25, severe: 0.50}
+rule_perturbations: []
+
+llm:
+  enabled: true
+  base_url: http://127.0.0.1:8000/v1
+  model: mistral-24b-editor
+  revision: 9527884be6e5616bdd54de542f9ae13384489724
+  require_pinned_revision: false
+  temperature: 0.0
+  timeout_seconds: 240
+  system_prompt: You are a precise text editor. Follow the transformation rubric exactly and return only the requested JSON.
+  max_completion_tokens: 2048
+  max_retries: 2
+  retry_base_seconds: 1.0
+  max_workers: 48
+
+llm_perturbations:
+  - name: internal_contradiction
+    dose_levels: [1, 2, 3]
+    require_operation_evidence: true
+    base_rubric: >-
+      The ANCHOR is {ANCHOR} — that sentence stays in the passage unchanged.
+      Rewrite each numbered target sentence into a fluent statement that
+      DIRECTLY CONTRADICTS the claim made by the anchor: assert the opposite
+      of what the anchor says while keeping the target's local style and
+      length. External real-world truth is irrelevant; only the internal
+      inconsistency with the anchor matters. In operation_evidence return
+      EXACTLY: ANCHOR: "<the anchor sentence>" || NEW: "<your rewritten
+      target sentence>"
+  - name: causal_reverse
+    dose_levels: [1, 2, 3]
+    require_operation_evidence: true
+    base_rubric: >-
+      Reverse the causal relation expressed at the target sentence while
+      preserving the entities and all other facts.

@@ -1,0 +1,39 @@
+# Training-side generator samples. Every seed here is disjoint from every
+# evaluation seed (Table 2: 20260801-20260810; single-fold / prefix /
+# human-agreement lanes: 20260621, 20260701-20260709), and the ban list keeps any
+# coinciding text out of training anyway.
+#
+#   python distillation/training_data/generator_pools/sample_pools.py --generator sedd   # mdlm, langflow, gpt2, elf
+#
+# Uses:
+#   seed 20260704  sentences spliced into the counterfactual set's dlm_splice edits (stage 4c)
+#   seed 20260620  generator coverage: whole documents, cross-model splices and
+#                  packed 512-token windows (stage 6, the corpus)
+#   seed 20260714  ELF-L native-length documents (stage 6, the corpus)
+out_dir: data/distill/training_data/generator_pools
+
+models:
+  sedd:     {checkpoint: louaaron/sedd-small, revision: bf0d9f70a1617e52b452d181f6734cd7ecffc20b, repo: third_party/SEDD}
+  mdlm:     {checkpoint: kuleshov-group/mdlm-owt}
+  langflow: {checkpoint: third_party/ckpt/langflow-owt/model.safetensors, repo: third_party/LangFlow}
+  elf:      {checkpoint: embedded-language-flows/ELF-L-owt-torch, sampling_config: distillation/training_data/generator_pools/elf_l_sampling.yaml}
+
+pools:
+  # splice sentences for the counterfactual set
+  - {name: sedd-small-s256-seed20260704, generator: sedd, steps: 256, n: 256, seed: 20260704}
+  - {name: mdlm-s512-seed20260704,       generator: mdlm, steps: 512, n: 256, seed: 20260704}
+  # generator coverage, three operating points per diffusion model
+  - {name: sedd-small-s64-seed20260620,  generator: sedd, steps: 64,  n: 128, seed: 20260620}
+  - {name: sedd-small-s128-seed20260620, generator: sedd, steps: 128, n: 128, seed: 20260620}
+  - {name: sedd-small-s256-seed20260620, generator: sedd, steps: 256, n: 128, seed: 20260620}
+  - {name: mdlm-s32-seed20260620,        generator: mdlm, steps: 32,  n: 128, seed: 20260620}
+  - {name: mdlm-s128-seed20260620,       generator: mdlm, steps: 128, n: 128, seed: 20260620}
+  - {name: mdlm-s512-seed20260620,       generator: mdlm, steps: 512, n: 128, seed: 20260620}
+  - {name: langflow-s32-seed20260620,    generator: langflow, steps: 32,  n: 128, seed: 20260620}
+  - {name: langflow-s64-seed20260620,    generator: langflow, steps: 64,  n: 128, seed: 20260620}
+  - {name: langflow-s128-seed20260620,   generator: langflow, steps: 128, n: 128, seed: 20260620}
+  - {name: elf-l-s64c4-seed20260620,     generator: elf, n: 384, seed: 20260620}
+  - {name: gpt2-medium-seed20260620,     generator: gpt2, model: gpt2-medium, n: 384, seed: 20260620}
+  - {name: gpt2-large-seed20260620,      generator: gpt2, model: gpt2-large,  n: 384, seed: 20260620}
+  # ELF-L native-length documents
+  - {name: elf-l-s64c4-seed20260714,     generator: elf, n: 768, seed: 20260714}

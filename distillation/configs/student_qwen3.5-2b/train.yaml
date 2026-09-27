@@ -1,0 +1,120 @@
+# CHORD distilled student: Qwen3.5-2B (final recipe, reported in the paper).
+#
+# Data: train_corpus.jsonl (about 26k rows) = the 3-domain clean/perturbed corpus
+# + fresh AR and diffusion-LM samples + packed windows (the base corpus, then
+# the AR samples), plus 3,000 extra clean parents with their highest-severity
+# contradiction / causal-reversal rewrites by Mistral-Small-24B (the relation
+# rewrites). How each part is generated: distillation/README.md.
+# The unconditional diffusion rows are visited twice per epoch (sampler:) so the
+# added relation rows do not dilute the generator coverage.
+#
+# Model: frozen Qwen3.5-2B + LoRA (r16) on all projections, followed by a trained
+# linear readout P_S: 2048 -> 256 on the last-token state of the coherence
+# prompt. P_S is ridge-initialized from the untrained student's features
+# (untrained_features.yaml) and trained with the adapters.
+#
+# Objective: ONE per-sample loss, the relative MSE between P_S h_student and the
+# teacher's top-256 PCA coordinates (distillation/teacher_features/).
+# No relational / angular / statistic terms: those constrain direction only,
+# while the RBF-MMD statistic depends on absolute distances.
+#
+#   python distillation/training/train.py --config distillation/configs/student_qwen3.5-2b/train.yaml
+student_model: Qwen/Qwen3.5-2B
+prompteol_template: coherence
+batch_block: 4
+max_length: 532
+model_dtype: float32
+
+output_dir: ../../../outputs/distill/student_qwen3.5-2b
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+batch_size: 16
+epochs: 5
+lr: 0.0001
+weight_decay: 0.0
+warmup_steps: 50
+grad_clip: 1.0
+eval_every: 120
+seed: 20260714
+save_epoch_checkpoints: true
+
+train:
+  texts: ../../../data/distill/training_data/train_corpus.jsonl
+  teacher_features: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/reference.npy
+
+val:
+  - name: owt
+    texts: ../../../data/distill/training_data/source_pool/val_owt.jsonl
+    teacher_features: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/val_owt.npy
+  - name: wiki
+    texts: ../../../data/distill/training_data/source_pool/val_wiki.jsonl
+    teacher_features: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/val_wiki.npy
+  - name: reddit
+    texts: ../../../data/distill/training_data/source_pool/val_reddit.jsonl
+    teacher_features: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/val_reddit.npy
+
+fresh:
+  texts: ../../../data/distill/training_data/counterfactual/unseen_stream.jsonl
+  teacher_features: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/unseen_stream.npy
+  per_batch: 8
+
+# Readout projection P_S and the (only) loss (train.py:_bridge_loss). Targets =
+# PCA dims [:rank]; every teacher feature file above is truncated to this width
+# on load. The val loss is the same relative MSE (~1 - R2).
+bridge:
+  rank: 256
+  lambda: 1.0
+  # untrained-student features of exactly train.texts (untrained_features.yaml)
+  init_features: ../../../outputs/distill/features/untrained-qwen3.5-2b/reference.npy
+  ridge: 0.001
+  lr: 0.00005
+  freeze: false
+  dim_weight: none
+
+# Row repeats per epoch (train.py:_row_repeat). Only these two kinds change.
+sampler:
+  repeat_kinds: {dlm_uncond: 2, elf_native: 2}
+
+fingerprint:
+  seen_texts: ../../../data/distill/training_data/counterfactual/probe_seen.jsonl
+  reserved_texts: ../../../data/distill/training_data/counterfactual/probe_reserved.jsonl
+  val_tolerance: 1.05
+
+holdout_align:
+  every: 480
+  sets:
+    - name: gpt2xl
+      texts: ../../../data/distill/training_data/ar_samples/samples/gpt2xl_t1.0.jsonl
+      targets: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/gpt2xl_t1.0.npy
+    - name: tinyllama
+      texts: ../../../data/distill/training_data/ar_samples/samples/tinyllama_t1.0.jsonl
+      targets: ../../../outputs/distill/features/teacher-qwen3.5-27b-pca1024/tinyllama_t1.0.npy
+
+# kbb / kab during training (train.py:decomp_eval), on fixed training-corpus
+# pools chosen by tag plus the two hold-out AR sets. AR pools avoid the ladder
+# generators (gpt2-medium/large). Teacher values on the same rows print once.
+decomp_monitor:
+  every: 480
+  n: 150
+  anchor: {kind: human_packed}
+  include_holdout: true
+  pools:
+    - {name: ar_gpt2s,    group: ar,  source: gpt2s_t1.0}
+    - {name: ar_pythia,   group: ar,  source: pythia1b4_t1.0}
+    - {name: ar_opt,      group: ar,  source: opt1b3_t1.0}
+    - {name: dlm_mdlm,    group: dlm, kind: dlm_uncond, domain: mdlm}
+    - {name: dlm_sedd,    group: dlm, kind: dlm_uncond, domain: sedd}
+    - {name: dlm_langflow, group: dlm, kind: dlm_uncond, domain: langflow}
+    - {name: dlm_elf,     group: dlm, kind: dlm_uncond, domain: elf}
+
+wandb:
+  project: chord-distill
+  name: chord-qwen3.5-2b-student
+  group: bridge
+  tags: [bridge, mse, rank256, batch-block-4, relation-gen, dose3-only, student-qwen3.5-2b, generator-x2]
+  notes: linear readout P_S(2048->256) + per-sample relative MSE; dose-3 relation data; diffusion rows x2

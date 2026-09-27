@@ -1,0 +1,31 @@
+# Stage 4d: counterfactual training layer, membership probe, relation-rewrite
+# parents and the unseen stream.
+#
+#   python distillation/training_data/counterfactual/build_layer.py \
+#       --config distillation/training_data/counterfactual/layer.yaml
+seed: 20260704
+set_dir: data/distill/training_data/counterfactual/set                            # stage 4c output
+unused_pool: data/distill/training_data/counterfactual/passages/unused_pool.jsonl  # stage 4a output
+probe_reserve_frac: 0.10     # parents held out entirely, for the probe's reserved side
+probe_per_side: 128          # half clean parents, half benign paraphrases
+per_family: 320              # edits sampled per harmful family
+harmful_families:
+  - sentence_permutation
+  - local_shuffle
+  - repetition
+  - broken_transition
+  - topic_drift
+  - contradiction
+  - causal_reverse
+  - dlm_splice
+rewrite_parents:             # parents of the relation rewrites (stage 5)
+  per_domain: 1000
+  min_sentences: 5
+  min_words: 120
+  max_words: 320
+outputs:
+  layer: data/distill/training_data/counterfactual/layer_counterfactual.jsonl
+  probe_seen: data/distill/training_data/counterfactual/probe_seen.jsonl
+  probe_reserved: data/distill/training_data/counterfactual/probe_reserved.jsonl
+  rewrite_parents: data/distill/training_data/relation_rewrites/parents_manifest.jsonl
+  unseen_stream: data/distill/training_data/counterfactual/unseen_stream.jsonl

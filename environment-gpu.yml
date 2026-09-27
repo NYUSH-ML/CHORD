@@ -1,0 +1,9 @@
+name: chord-gpu
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - torch>=2.10
+      - -e .[hf,distill,generators,test]

@@ -1,0 +1,38 @@
+# Teacher features for distillation: the deployed 27B CHORD encoder on every
+# text file the trainer reads, in one pass. `reference` is the training corpus
+# (row-aligned with it); the runs are the unseen stream (the PCA pool and the
+# trainer's per-batch unseen rows), the three validation sets and the two
+# hold-out AR sets.
+#
+#   python -m chord.featurize --config distillation/teacher_features/teacher_features.yaml
+#
+# Writes outputs/distill/features/teacher-qwen3.5-27b/{reference,<run_id>}.npy; then
+# teacher_pca.py fits the basis on unseen_stream and projects the rest
+# (teacher_features.slurm runs both).
+#
+# The protocol block must stay byte-identical to the paper's 27B CHORD encoder:
+# same model + revision, layer -3, prompteol/coherence, max_length 532, bfloat16.
+# Change any of them and the targets no longer describe the encoder the student
+# is meant to imitate.
+seed: 20260714
+runs_manifest: teacher_runs.jsonl
+output_dir: ../../outputs/distill
+text_normalization: whitespace
+reference:
+  path: ../../data/distill/training_data/train_corpus.jsonl
+  text_key: text
+encoders:
+  - name: teacher-qwen3.5-27b
+    batch_size: 8
+    protocol:
+      backend: huggingface
+      model: Qwen/Qwen3.5-27B
+      revision: fc05daec18b0a78c049392ed2e771dde82bdf654
+      tokenizer_revision: fc05daec18b0a78c049392ed2e771dde82bdf654
+      max_length: 532
+      layer: -3
+      pooling: prompteol
+      prompteol_template: coherence
+      normalization: none
+      model_dtype: bfloat16
+      cache_dtype: float32

@@ -1,0 +1,113 @@
+# The training corpus, as one declarative recipe: the last step of the data
+# pipeline, run once every sample set exists.
+#
+#   python distillation/training_data/corpus/build_corpus.py \
+#       --config distillation/training_data/corpus/train_corpus.yaml
+#
+# Starts from the counterfactual layer (stage 4) and adds real-generator text
+# in the formats the student is scored on:
+#   * whole generator documents (every diffusion / flow / AR model of Table 2)
+#   * cross-model splices: clean parents with 30-50 % of their sentences
+#     replaced by sentences from 2-3 different generators
+#   * packed 512-token windows, human and per generator (the Table-2 reference
+#     format: documents joined with EOS and cut into fixed GPT-2 token windows)
+#   * ELF-L at its native ~929-token length, as documents and as windows
+#   * autoregressive samples of eight model x temperature settings
+#   * the relation rewrites: 3,000 fresh parents and their strongest
+#     contradiction / causal-reversal rewrites (stage 5)
+#
+# Data coverage has been the dominant lever on the Table-2 ranking lane: every
+# historical ranking failure was fixed by covering a format the student had
+# never seen, not by changing the loss.
+#
+# Generator pools come from generator_pools/ (training seeds only); every row is
+# checked against all released evaluation text (excluded_eval_texts.yaml) and deduplicated.
+seed: 20260711
+
+output: data/distill/training_data/train_corpus.jsonl
+report: data/distill/training_data/train_corpus.report.json
+
+exclude_eval_texts: true
+ban:  # the trainer's hold-out generators: never training rows
+  - data/distill/training_data/ar_samples/samples/gpt2xl_t1.0.jsonl
+  - data/distill/training_data/ar_samples/samples/tinyllama_t1.0.jsonl
+
+base: data/distill/training_data/counterfactual/layer_counterfactual.jsonl
+
+add:
+  # ---- whole generator documents ------------------------------------------
+  - {kind: dlm_uncond, domain: sedd,     mode: documents, min_words: 16,
+     source: data/distill/training_data/generator_pools/sedd-small-s*-seed20260620.jsonl}
+  - {kind: dlm_uncond, domain: mdlm,     mode: documents, min_words: 16,
+     source: data/distill/training_data/generator_pools/mdlm-s*-seed20260620.jsonl}
+  - {kind: dlm_uncond, domain: langflow, mode: documents, min_words: 16,
+     source: data/distill/training_data/generator_pools/langflow-s*-seed20260620.jsonl}
+  - {kind: dlm_uncond, domain: elf,      mode: documents, min_words: 16,
+     source: data/distill/training_data/generator_pools/elf-l-s64c4-seed20260620.jsonl}
+  - {kind: ar_uncond,  domain: ar,       mode: documents, min_words: 16,
+     source: data/distill/training_data/generator_pools/gpt2-*-seed20260620.jsonl}
+
+  # ---- cross-model splices of the clean parents ------------------------------
+  - kind: dlm_mix_splice
+    mode: splice_mix
+    parents_kind: clean_parent
+    limit: 1000
+    per_parent: 2
+    frac: [0.3, 0.5]
+    n_models: [2, 3]
+    min_words: 16
+    splice_sources:
+      sedd:     data/distill/training_data/generator_pools/sedd-small-s*-seed20260620.jsonl
+      mdlm:     data/distill/training_data/generator_pools/mdlm-s*-seed20260620.jsonl
+      langflow: data/distill/training_data/generator_pools/langflow-s*-seed20260620.jsonl
+      elf:      data/distill/training_data/generator_pools/elf-l-s64c4-seed20260620.jsonl
+      ar:       data/distill/training_data/generator_pools/gpt2-*-seed20260620.jsonl
+
+  # ---- packed 512-token windows ----------------------------------------------
+  - {kind: human_packed, domain: owt, mode: packed, window: 512, limit: 1000, tokenizer: gpt2,
+     source: data/distill/training_data/source_pool/source_pool.jsonl, where: {domain: owt}}
+  - {kind: gen_packed, domain: sedd,     mode: packed, window: 512, limit: 400, tokenizer: gpt2,
+     source: data/distill/training_data/generator_pools/sedd-small-s*-seed20260620.jsonl}
+  - {kind: gen_packed, domain: mdlm,     mode: packed, window: 512, limit: 400, tokenizer: gpt2,
+     source: data/distill/training_data/generator_pools/mdlm-s*-seed20260620.jsonl}
+  - {kind: gen_packed, domain: langflow, mode: packed, window: 512, limit: 400, tokenizer: gpt2,
+     source: data/distill/training_data/generator_pools/langflow-s*-seed20260620.jsonl}
+  - {kind: gen_packed, domain: elf,      mode: packed, window: 512, limit: 400, tokenizer: gpt2,
+     source: data/distill/training_data/generator_pools/elf-l-s64c4-seed20260620.jsonl}
+  - {kind: gen_packed, domain: ar,       mode: packed, window: 512, limit: 400, tokenizer: gpt2,
+     source: data/distill/training_data/generator_pools/gpt2-*-seed20260620.jsonl}
+
+  # ---- ELF-L at its native length --------------------------------------------
+  - {kind: elf_native, domain: elf, mode: documents,
+     source: data/distill/training_data/generator_pools/elf-l-s64c4-seed20260714.jsonl}
+  - {kind: gen_packed_native, domain: elf, mode: packed, window: 929, limit: 400, tokenizer: gpt2,
+     source: [data/distill/training_data/generator_pools/elf-l-s64c4-seed20260620.jsonl,
+              data/distill/training_data/generator_pools/elf-l-s64c4-seed20260714.jsonl]}
+
+  # ---- autoregressive samples (the hold-out settings are banned above) --------
+  - kind: ar_uncond
+    domain: ar
+    mode: documents
+    tag_from_file: true       # row `source` = the sampling setting, e.g. gpt2s_t1.0
+    source:
+      - data/distill/training_data/ar_samples/samples/gpt2s_t1.0.jsonl
+      - data/distill/training_data/ar_samples/samples/gpt2s_t0.8.jsonl
+      - data/distill/training_data/ar_samples/samples/gpt2m_t1.0.jsonl
+      - data/distill/training_data/ar_samples/samples/gpt2m_t0.8.jsonl
+      - data/distill/training_data/ar_samples/samples/gpt2l_t1.0.jsonl
+      - data/distill/training_data/ar_samples/samples/gpt2l_t0.8.jsonl
+      - data/distill/training_data/ar_samples/samples/pythia1b4_t1.0.jsonl
+      - data/distill/training_data/ar_samples/samples/opt1b3_t1.0.jsonl
+
+  # ---- relation rewrites: the parents and their dose-3 rewrites ---------------
+  - kind: relation_rewrite    # overridden per row by the row's own kind
+    mode: documents
+    source: data/distill/training_data/relation_rewrites/rewrite_rows.jsonl
+    where: {source: [dose3, relgen]}
+    keep_fields: [kind, domain, source]
+
+# Ablation knobs; leave empty for the released recipe.
+drop_kinds: []
+cap_kinds: {}
+
+shuffle: true

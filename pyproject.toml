@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chord-metric"
+version = "0.1.0"
+description = "CHORD: a coherence-aware corpus-level distance for open-ended text generation"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Jinnuo Liu" },
+  { name = "Junhao Zhu" },
+  { name = "Weifeng Jiang" },
+  { name = "Haoming Liu" },
+  { name = "Hongyi Wen" },
+]
+requires-python = ">=3.10"
+keywords = ["text generation", "evaluation", "coherence", "MMD", "language models"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.26",
+  "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+# Encoding texts with a CHORD encoder (the 27B/9B presets or a distilled student).
+hf = [
+  "torch>=2.10",
+  "transformers>=5.3,<6",
+  "accelerate>=1.10",
+  "safetensors>=0.7",
+  "huggingface_hub>=1.0",
+]
+# Building the training data and training a student (distillation/).
+distill = [
+  "chord-metric[hf]",
+  "peft>=0.15",
+  "pyarrow>=15",
+]
+# Sampling the diffusion / flow generators (SEDD, MDLM, LangFlow) for the
+# training data; their released code targets transformers<5, so these run in a
+# side environment (environment-generators.yml).
+generators = [
+  "omegaconf>=2.3",
+  "einops>=0.8",
+]
+# Unit tests.
+test = [
+  "pytest>=8",
+]
+
+[project.urls]
+Repository = "https://github.com/NYUSH-ML/CHORD"
+Experiments = "https://github.com/NYUSH-ML/CHORD_experiments"
+"Student models" = "https://huggingface.co/mikezhu/chord-qwen3.5-2b-student"
+
+[project.scripts]
+chord-score = "chord.api:main"
+
+[tool.setuptools.packages.find]
+include = ["chord*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["outputs", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["chord"]

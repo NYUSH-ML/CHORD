@@ -1,0 +1,28 @@
+# Features of the UNTRAINED Qwen3.5-0.8B (hidden size 1024) under the
+# coherence prompt, last hidden layer, on every row of the training corpus
+# (train_corpus.jsonl, row-aligned with the teacher targets). They are used once:
+# the closed-form ridge initialization of the student's readout P_S
+# (train.yaml `bridge.init_features`).
+#
+#   python -m chord.featurize --config distillation/configs/student_qwen3.5-0.8b/untrained_features.yaml
+seed: 20260714
+output_dir: ../../../outputs/distill
+text_normalization: whitespace
+reference:
+  path: ../../../data/distill/training_data/train_corpus.jsonl
+  text_key: text
+encoders:
+- name: untrained-qwen3.5-0.8b
+  batch_size: 32
+  protocol:
+    backend: huggingface
+    model: Qwen/Qwen3.5-0.8B
+    revision: null
+    tokenizer_revision: null
+    max_length: 532
+    pooling: prompteol
+    prompteol_template: coherence
+    normalization: none
+    model_dtype: bfloat16
+    cache_dtype: float32
+    layer: last

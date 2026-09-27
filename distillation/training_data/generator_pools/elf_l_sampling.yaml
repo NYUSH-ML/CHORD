@@ -1,0 +1,9 @@
+# Sampling settings for ELF-L, passed to the official ELF sampler as
+# `sampling_configs_path`: 64-step SDE sampling, self-conditioning CFG scale 4
+# (the operating point the paper evaluates).
+- sampling_method: sde
+  num_sampling_steps: [64]
+  cfgs: [1]
+  sde_gamma: 1.0
+  self_cond_cfg_scales: [4]
+  time_schedule: logit_normal

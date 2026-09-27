@@ -1,0 +1,10 @@
+name: chord
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy>=1.26
+  - pyyaml>=6
+  - pip:
+      - -e .

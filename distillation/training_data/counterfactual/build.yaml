@@ -1,0 +1,40 @@
+# Stage 4c: the training-side counterfactual set (rule edits, LLM edits,
+# DLM splices, benign paraphrases), with the evaluation set's quality gates.
+#
+#   python -m chord.data.counterfactual --config distillation/training_data/counterfactual/build.yaml
+#
+# Same builder and families as the evaluation set (CHORD_experiments,
+# counterfactual_eval/configs/build_evalset.yaml); the
+# inputs are training-side: the stage-2a split, the stage-2b Mistral edits and
+# training-seed DLM samples as the sentences spliced in (generator_pools/, seed 20260704).
+repo_root: .
+output_dir: data/distill/training_data/counterfactual/set
+corpus_name: distill_train
+seed: 20260703
+n_parents: 600
+n_reference: 3000
+min_sentences: 4
+position: uniform
+
+sources:
+  clean_candidates: data/distill/training_data/counterfactual/passages/clean_candidates.jsonl
+  reference:        data/distill/training_data/counterfactual/passages/reference.jsonl
+  human_splice_pool: data/distill/training_data/counterfactual/passages/unused_pool.jsonl
+  dlm_splice_pool:  data/distill/training_data/generator_pools/*-seed20260704.jsonl
+  llm_perturbations: data/distill/training_data/counterfactual/llm_edits.jsonl
+
+rule_doses: [0.10, 0.25, 0.50, 0.75, 1.00]
+rule_families:
+  - {alias: sentence_permutation, rule: sentence_permute, group: order}
+  - {alias: local_shuffle,        rule: local_shuffle,    group: order, options: {window_size: 4}}
+  - {alias: repetition,           rule: sentence_repeat,  group: repetition}
+
+llm_families:
+  - {alias: contradiction,     members: [internal_contradiction], group: relation, require_anchor: true}
+  - {alias: causal_reverse,    members: [causal_reverse],         group: relation}
+  - {alias: broken_transition, members: [broken_transition],      group: discourse}
+  - {alias: topic_drift,       members: [topic_drift],            group: discourse}
+benign_paraphrase: [para_lexical, para_syntactic]
+
+dlm_splice:
+  doses: [0.10, 0.25, 0.50]

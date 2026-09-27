@@ -1,0 +1,21 @@
+# Stage 4a: split the source pool into edit parents / reference / unused pool.
+#
+#   python -m chord.data.split_passages --config distillation/training_data/counterfactual/split.yaml
+#
+# Same tool and rules as the evaluation set's split (CHORD_experiments,
+# counterfactual_eval/configs/select_source_passages.yaml), on training-side text. Parents are edited in
+# stage 4b; the reference slice is the clean pool the set builder needs; the
+# unused pool (everything else) supplies the relation-rewrite parents and the
+# unseen stream (stage 4d).
+repo_root: .
+seed: 20260703
+source: data/distill/training_data/source_pool/source_pool.jsonl
+domains: [owt, wiki, reddit]
+min_sentences: 4
+min_words: 100
+max_words: 400
+parents_total: 600
+reference_total: 3000
+output_dir: data/distill/training_data/counterfactual/passages
+manifest: data/distill/training_data/counterfactual/passages/manifest.jsonl
+corpus_version: distill-train-v1

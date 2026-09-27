@@ -1,0 +1,14 @@
+# Every released evaluation text. No stage of the training-data pipeline may
+# emit a row that coincides with one of these: leakage would inflate the
+# student on exactly the lanes it is judged on. Globs are relative to the
+# repository root; every JSONL row with a `text` field contributes.
+#
+# The source pool (stage 1) additionally drops any passage that shares a
+# 13-word n-gram with these texts; later stages drop exact matches
+# (whitespace-collapsed, lowercased).
+globs:
+  - outputs/counterfactual/*/texts/*.jsonl              # counterfactual evaluation sets (Table 1, appendix editors, arXiv)
+  - outputs/counterfactual/*/texts/conditions/*.jsonl
+  - outputs/casestudy/**/*.jsonl                        # Table 2 / Figure 5 / Table 3 references, held-out humans, samples
+  - outputs/experiments/**/*.jsonl                      # appendix experiment corpora
+  - data/distill/eval_ban/*.jsonl                       # evaluation-side packed windows and ELF-L samples

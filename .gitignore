@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.cache/
+.DS_Store
+.venv/
+
+outputs/
+logs/
+third_party/
+data/raw/
+data/interim/
+data/processed/
+data/external/
+data/distill/
+*.npz
+*.npy
+*.log
+*.err
+*.out
+wandb/
+
+# local (machine-specific) config overrides
+configs/local/
+
+# paper PDFs
+*.pdf
+
+# Local lint and test caches
+.ruff_cache/
+.pytest_cache/

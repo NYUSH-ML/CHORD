@@ -1,0 +1,12 @@
+# AR-coverage augmentation sample (train)
+# Same sampler/format as the evaluation samples; seed disjoint from every evaluation seed.
+model: gpt2
+n_samples: 400
+max_new_tokens: 512
+min_new_tokens: 480
+temperature: 0.8
+top_p: 0.95
+repetition_penalty: 1.0
+batch_size: 16
+seed: 20261913
+output_path: ../../../data/distill/training_data/ar_samples/samples/gpt2s_t0.8.jsonl

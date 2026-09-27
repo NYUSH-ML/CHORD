@@ -1,0 +1,6 @@
+{"run_id": "unseen_stream", "model": "unseen-stream", "family": "unseen", "seed": 0, "samples_path": "../../data/distill/training_data/counterfactual/unseen_stream.jsonl"}
+{"run_id": "val_owt", "model": "val-owt", "family": "val", "seed": 0, "samples_path": "../../data/distill/training_data/source_pool/val_owt.jsonl"}
+{"run_id": "val_wiki", "model": "val-wiki", "family": "val", "seed": 0, "samples_path": "../../data/distill/training_data/source_pool/val_wiki.jsonl"}
+{"run_id": "val_reddit", "model": "val-reddit", "family": "val", "seed": 0, "samples_path": "../../data/distill/training_data/source_pool/val_reddit.jsonl"}
+{"run_id": "gpt2xl_t1.0", "model": "gpt2-xl", "family": "ar-holdout", "seed": 0, "samples_path": "../../data/distill/training_data/ar_samples/samples/gpt2xl_t1.0.jsonl"}
+{"run_id": "tinyllama_t1.0", "model": "TinyLlama/TinyLlama_v1.1", "family": "ar-holdout", "seed": 0, "samples_path": "../../data/distill/training_data/ar_samples/samples/tinyllama_t1.0.jsonl"}

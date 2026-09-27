@@ -1,0 +1,38 @@
+# Stage 1: clean three-domain passage pool + validation sets, from public data.
+#
+#   python distillation/training_data/source_pool/build_source_pool.py \
+#       --config distillation/training_data/source_pool/source_pool.yaml
+#
+# Every dataset is pinned to a revision and read shard by shard in sorted order,
+# so the stream (and the output) is reproducible.
+seed: 20260703
+per_domain: 6000          # pool passages per domain (split into parents / reference / unused pool downstream)
+val_per_domain: 500       # held-out validation passages per domain
+scan_cap: 2000000         # safety stop per domain (documents read)
+
+filters:
+  min_words: 100
+  max_words: 400
+  min_sentences: 4
+  lead_target_words: 350  # over-length documents are cut to a lead passage of about this length
+
+domains:
+  owt:
+    repo: Skylion007/openwebtext
+    revision: 79d93d786212f7344586290adb811d4ae6a1762c
+    prefix: plain_text/train-
+    field: text
+  wiki:
+    repo: wikimedia/wikipedia
+    revision: b04c8d1ceb2f5cd4588862100d08de323dccfbaa
+    prefix: 20231101.en/train-
+    field: text
+  reddit:
+    repo: trl-lib/tldr
+    revision: 21233da376667088e6eb1ce4ce19ed832c2935d3
+    prefix: data/train-
+    field: prompt
+    extract: reddit_post  # keep the POST body of the SUBREDDIT/TITLE/POST prompt
+
+output: data/distill/training_data/source_pool/source_pool.jsonl   # {text, domain}; report next to it
+val_dir: data/distill/training_data/source_pool                  # val_{owt,wiki,reddit}.jsonl
