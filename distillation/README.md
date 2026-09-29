@@ -3,7 +3,7 @@
 The CHORD encoder (Qwen3.5-27B, layer −3, `coherence` prompt) is distilled
 into two small students. Both use the same recipe; only the backbone differs.
 
-| Student | Backbone | Readout `P_S` | Config |
+| Student | Backbone | Projection head `P_S` | Config |
 |---|---|---|---|
 | [`mikezhu/chord-qwen3.5-2b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-2b-student) | Qwen3.5-2B | 2048 → 256 | `configs/student_qwen3.5-2b/` |
 | [`mikezhu/chord-qwen3.5-0.8b-student`](https://huggingface.co/mikezhu/chord-qwen3.5-0.8b-student) | Qwen3.5-0.8B | 1024 → 256 | `configs/student_qwen3.5-0.8b/` |
@@ -11,7 +11,7 @@ into two small students. Both use the same recipe; only the backbone differs.
 Each student consists of:
 
 - its backbone with LoRA adapters (r 16, on all projections);
-- a trained linear readout `P_S` on the last-token state of the coherence
+- a trained linear projection head `P_S` on the last-token state of the coherence
   prompt.
 
 Training uses a single per-sample loss: the relative MSE between
@@ -22,7 +22,7 @@ The pipeline has four stages:
 1. **Training texts** (§1): build every training text from public data.
 2. **Teacher targets** (§2): embed those texts with the 27B teacher and
    project the embeddings onto a PCA basis.
-3. **Readout initialization** (§3): embed the texts with each untrained
+3. **Projection-head initialization** (§3): embed the texts with each untrained
    student backbone.
 4. **Training** (§4).
 
@@ -69,7 +69,7 @@ distillation/
     relation_rewrites/  5  contradiction / causal-reversal rewrites
     corpus/             6  assembles the training corpus from 1-5
   teacher_features/   §2 teacher features and PCA targets
-  training/           §3 readout initialization, §4 training
+  training/           §3 projection-head initialization, §4 training
 ```
 
 Outputs: training texts go to `data/distill/training_data/`, one folder per
@@ -294,9 +294,9 @@ corpus):
 - `teacher-qwen3.5-27b-pca1024/<file>.npy`: projected targets, 1,024-d, plus
   the basis `basis.npz`.
 
-## 3. Readout initialization (`configs/student_<s>/untrained_features.yaml`)
+## 3. Projection-head initialization (`configs/student_<s>/untrained_features.yaml`)
 
-Each student's readout `P_S` starts from a closed-form fit: a ridge regression
+Each student's projection head `P_S` starts from a closed-form fit: a ridge regression
 from the **untrained** backbone's last-layer features to the teacher targets,
 on every row of `train_corpus.jsonl`. This step computes those features.
 
@@ -398,7 +398,7 @@ folder as the original.
    ```
 
 3. **Compute the untrained student's features.** They are used to initialize
-   the readout (§3). Copy
+   the projection head (§3). Copy
    `distillation/configs/student_qwen3.5-0.8b/untrained_features.yaml` to
    `my_untrained_features.yaml` and edit it:
    - set `reference.path` to `../../../data/my_corpus.jsonl`;
